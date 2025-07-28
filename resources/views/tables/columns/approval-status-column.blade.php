@@ -1,33 +1,43 @@
-<div>
-    @if($getRecord()->approvalStatus)
-        <p class="px-3">
-            <small>
-                @if ($getRecord()->isApprovalCompleted())
-                    {{ __('filament-approvals::approvals.status_column.approval_complete') }} {{ __('filament-approvals::approvals.status_column.approval_by_prefix') }}
-                    @if ($getRecord()->lastApproval)
-                        {{ $getRecord()->lastApproval->approver_name }}
-                    @else
-                        {{ $getRecord()->createdBy()->name }}
-                    @endif
+<div class="approval-status-column">
+    @php
+        $record = $getRecord();
+        $approvalStatus = $record->approvalStatus;
+        $isCompleted = $record->isApprovalCompleted();
+        $creator = $record->creator();
+        $nextApprover = $isCompleted ? null : $record->getNextApprover();
+        $lastApprover = $isCompleted ? $record->getLastApprover() : null;
+    @endphp
+
+    @if($approvalStatus)
+        <div class="space-y-1">
+            <p class="px-3 text-sm">
+                @if ($isCompleted)
+                    <span class="approval-status-indicator approval-status-approved">
+                        {{ __('filament-approvals::approvals.status_column.approval_complete') }}
+                    </span>
+                    {{ __('filament-approvals::approvals.status_column.approval_by_prefix') }}
+                    <span class="font-medium">
+                        {{ $lastApprover?->name ?? $creator?->name ?? __('Unknown') }}
+                    </span>
                 @else
-                    {{ $getRecord()->approvalStatus->status }} {{ __('filament-approvals::approvals.status_column.approval_by_prefix') }}
-                    @if ($getRecord()->nextApprover)
-                        {{ $getRecord()->nextApprover->name }}
-                    @else
-                        {{ $getRecord()->createdBy()->name }}
-                    @endif
+                    <span class="approval-status-indicator approval-status-pending">
+                        {{ $approvalStatus->status }}
+                    </span>
+                    {{ __('filament-approvals::approvals.status_column.approval_by_prefix') }}
+                    <span class="font-medium">
+                        {{ $nextApprover?->name ?? $creator?->name ?? __('Unknown') }}
+                    </span>
                 @endif
-            </small>
-        </p>
-        <p class="px-3 text-xs">
-            <small>
-                {{ $getRecord()->isApprovalCompleted() ?
+            </p>
+            
+            <p class="px-3 text-xs text-gray-600 dark:text-gray-400">
+                {{ $isCompleted ?
                     __('filament-approvals::approvals.status_column.approval_complete') :
                     __('filament-approvals::approvals.status_column.approval_in_process') }}
-            </small>
-        </p>
+            </p>
+        </div>
     @else
-        <span class="px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-xs">
+        <span class="approval-status-indicator approval-status-rejected">
             {{ __('filament-approvals::approvals.status_column.approval_status_does_not_exist') }}
         </span>
     @endif
