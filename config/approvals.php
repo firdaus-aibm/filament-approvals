@@ -4,6 +4,31 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Performance Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure performance-related settings for the approval system.
+    |
+    */
+    "performance" => [
+        // Cache duration for model scanning (in seconds)
+        "model_scan_cache_ttl" => 3600, // 1 hour
+        
+        // Enable eager loading for approval relationships
+        "eager_load_relationships" => true,
+        
+        // Maximum number of approval steps to process at once
+        "max_batch_size" => 100,
+        
+        // Cache approval status queries
+        "cache_approval_status" => true,
+        
+        // Cache duration for approval status (in seconds)
+        "approval_status_cache_ttl" => 300, // 5 minutes
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Role Model
     |--------------------------------------------------------------------------
     |
@@ -89,6 +114,9 @@ return [
             "discarded" => "gray",
             "submitted" => "info",
         ],
+        
+        // Enable status indicators with CSS classes
+        "use_status_indicators" => true,
     ],
 
     /*

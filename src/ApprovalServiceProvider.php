@@ -16,6 +16,7 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 use EightyNine\Approvals\Commands\ApprovalCommand;
 use EightyNine\Approvals\Commands\PublishCommand;
 use EightyNine\Approvals\Testing\TestsApproval;
+use EightyNine\Approvals\Services\ModelScannerService;
 
 class ApprovalServiceProvider extends PackageServiceProvider
 {
@@ -62,61 +63,82 @@ class ApprovalServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        // Register services with optimized bindings
+        $this->app->singleton(ModelScannerService::class, function ($app) {
+            return new ModelScannerService();
+        });
     }
 
     public function packageBooted(): void
     {
-        // Asset Registration
-        FilamentAsset::register(
-            $this->getAssets(),
-            $this->getAssetPackageName()
-        );
+        // Only register assets in web context to improve CLI performance
+        if (!$this->app->runningInConsole() || $this->app->runningUnitTests()) {
+            // Asset Registration - conditional loading
+            FilamentAsset::register(
+                $this->getAssets(),
+                $this->getAssetPackageName()
+            );
 
-        FilamentAsset::registerScriptData(
-            $this->getScriptData(),
-            $this->getAssetPackageName()
-        );
+            FilamentAsset::registerScriptData(
+                $this->getScriptData(),
+                $this->getAssetPackageName()
+            );
 
-        // Icon Registration
-        FilamentIcon::register($this->getIcons());
+            // Icon Registration
+            FilamentIcon::register($this->getIcons());
+        }
 
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            // Publish configuration file
-            $this->publishes([
-                __DIR__ . '/../config/approvals.php' => config_path('approvals.php'),
-            ], 'filament-approvals-config');
+        // Handle Stubs - only in console
+        if ($this->app->runningInConsole()) {
+            $this->registerPublishingGroups();
+        }
 
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
+        // Testing - only when needed
+        if (class_exists('Livewire\Features\SupportTesting\Testable')) {
+            Testable::mixin(new TestsApproval());
+        }
+    }
+
+    /**
+     * Register publishing groups with optimized file operations
+     */
+    private function registerPublishingGroups(): void
+    {
+        // Publish configuration file
+        $this->publishes([
+            __DIR__ . '/../config/approvals.php' => config_path('approvals.php'),
+        ], 'filament-approvals-config');
+
+        // Publish stubs - check existence first
+        $stubsPath = __DIR__ . '/../stubs/';
+        if (is_dir($stubsPath)) {
+            foreach (app(Filesystem::class)->files($stubsPath) as $file) {
                 $this->publishes([
                     $file->getRealPath() => base_path("stubs/filament-approvals/{$file->getFilename()}"),
                 ], 'filament-approvals-stubs');
             }
-
-            // Publish Views for customization
-            $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path('views/vendor/filament-approvals'),
-            ], 'filament-approvals-views');
-
-            // Publish Filament Resources for customization
-            $this->publishes([
-                __DIR__ . '/Filament/Resources' => app_path('Filament/Resources'),
-            ], 'filament-approvals-resources');
-
-            // Publish Forms and Tables for customization
-            $this->publishes([
-                __DIR__ . '/Forms' => app_path('Forms/Approvals'),
-                __DIR__ . '/Tables' => app_path('Tables/Approvals'),
-            ], 'filament-approvals-components');
-
-            // Publish translations for customization
-            $this->publishes([
-                __DIR__ . '/../resources/lang' => resource_path('lang/vendor/filament-approvals'),
-            ], 'filament-approvals-translations');
         }
 
-        // Testing
-        Testable::mixin(new TestsApproval());
+        // Publish Views for customization
+        $this->publishes([
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/filament-approvals'),
+        ], 'filament-approvals-views');
+
+        // Publish Filament Resources for customization
+        $this->publishes([
+            __DIR__ . '/Filament/Resources' => app_path('Filament/Resources'),
+        ], 'filament-approvals-resources');
+
+        // Publish Forms and Tables for customization
+        $this->publishes([
+            __DIR__ . '/Forms' => app_path('Forms/Approvals'),
+            __DIR__ . '/Tables' => app_path('Tables/Approvals'),
+        ], 'filament-approvals-components');
+
+        // Publish translations for customization
+        $this->publishes([
+            __DIR__ . '/../resources/lang' => resource_path('lang/vendor/filament-approvals'),
+        ], 'filament-approvals-translations');
     }
 
     protected function getAssetPackageName(): ?string
@@ -129,11 +151,21 @@ class ApprovalServiceProvider extends PackageServiceProvider
      */
     protected function getAssets(): array
     {
-        return [
-            // AlpineComponent::make('filament-approvals', __DIR__ . '/../resources/dist/components/filament-approvals.js'),
-            Css::make('filament-approvals-styles', __DIR__ . '/../resources/dist/filament-approvals.css'),
-            Js::make('filament-approvals-scripts', __DIR__ . '/../resources/dist/filament-approvals.js'),
-        ];
+        $assets = [];
+        
+        // Only include CSS if file exists and is not empty
+        $cssPath = __DIR__ . '/../resources/dist/filament-approvals.css';
+        if (file_exists($cssPath) && filesize($cssPath) > 0) {
+            $assets[] = Css::make('filament-approvals-styles', $cssPath);
+        }
+        
+        // Only include JS if file exists and is not empty
+        $jsPath = __DIR__ . '/../resources/dist/filament-approvals.js';
+        if (file_exists($jsPath) && filesize($jsPath) > 0) {
+            $assets[] = Js::make('filament-approvals-scripts', $jsPath);
+        }
+        
+        return $assets;
     }
 
     /**
@@ -144,6 +176,7 @@ class ApprovalServiceProvider extends PackageServiceProvider
         return [
             ApprovalCommand::class,
             PublishCommand::class,
+            \EightyNine\Approvals\Commands\ClearCacheCommand::class,
         ];
     }
 

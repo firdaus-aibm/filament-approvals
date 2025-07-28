@@ -1,0 +1,73 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     * 
+     * These indexes will improve performance for approval-related queries.
+     */
+    public function up()
+    {
+        // Add indexes for common approval queries
+        // Note: Adjust table names based on your actual approval tables
+        
+        // Index for approval status lookups
+        if (Schema::hasTable('process_approval_flows')) {
+            Schema::table('process_approval_flows', function (Blueprint $table) {
+                $table->index('approvable_type', 'idx_approval_flows_type');
+                $table->index(['approvable_type', 'created_at'], 'idx_approval_flows_type_created');
+            });
+        }
+        
+        // Index for approval steps
+        if (Schema::hasTable('process_approval_flow_steps')) {
+            Schema::table('process_approval_flow_steps', function (Blueprint $table) {
+                $table->index('process_approval_flow_id', 'idx_approval_steps_flow_id');
+                $table->index(['role_id', 'created_at'], 'idx_approval_steps_role_created');
+            });
+        }
+        
+        // Index for process approvals
+        if (Schema::hasTable('process_approvals')) {
+            Schema::table('process_approvals', function (Blueprint $table) {
+                $table->index(['approvable_type', 'approvable_id'], 'idx_approvals_polymorphic');
+                $table->index(['status', 'created_at'], 'idx_approvals_status_created');
+                $table->index('creator_id', 'idx_approvals_creator');
+            });
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down()
+    {
+        // Remove the indexes
+        if (Schema::hasTable('process_approval_flows')) {
+            Schema::table('process_approval_flows', function (Blueprint $table) {
+                $table->dropIndex('idx_approval_flows_type');
+                $table->dropIndex('idx_approval_flows_type_created');
+            });
+        }
+        
+        if (Schema::hasTable('process_approval_flow_steps')) {
+            Schema::table('process_approval_flow_steps', function (Blueprint $table) {
+                $table->dropIndex('idx_approval_steps_flow_id');
+                $table->dropIndex('idx_approval_steps_role_created');
+            });
+        }
+        
+        if (Schema::hasTable('process_approvals')) {
+            Schema::table('process_approvals', function (Blueprint $table) {
+                $table->dropIndex('idx_approvals_polymorphic');
+                $table->dropIndex('idx_approvals_status_created');
+                $table->dropIndex('idx_approvals_creator');
+            });
+        }
+    }
+};
