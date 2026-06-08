@@ -7,6 +7,14 @@ This package allows you to implement approval flows in your Laravel Filament app
 
 _This package brings the [ringlesoft/laravel-process-approval](https://github.com/ringlesoft/laravel-process-approval)) functionalities to filament. You can use all the ringlesoft/laravel-process-approval features in your laravel project. It also uses the [spatie/laravel-permissions](https://github.com/spatie/laravel-permissions) package, so you can use all its features._
 
+## Version Compatibility
+
+| Branch | Filament Version | PHP | Laravel |
+|--------|-----------------|-----|---------|
+| `3.x` | v3 | ^8.2 | ^10.0\|^11.0\|^12.0 |
+| `v4.x` | v4 | ^8.2 | ^11.0\|^12.0\|^13.0 |
+| `v5.x` | v5 | ^8.2 | ^11.0\|^12.0\|^13.0 |
+
 ## 🛠️ Be Part of the Journey
 
 Hi, I'm Eighty Nine. I created aprovals plugin to solve real problems I faced as a developer. Your sponsorship will allow me to dedicate more time to enhancing these tools and helping more people. [Become a sponsor](https://github.com/sponsors/eighty9nine) and join me in making a positive impact on the developer community.
@@ -30,10 +38,17 @@ This package is based on roles, which are provided by the package [spatie/larave
 
 ## Installation
 
-You can install the package via composer:
+You can install the package via composer. Choose the branch matching your Filament version:
 
 ```bash
-composer require eightynine/filament-approvals
+# For Filament v3
+composer require eightynine/filament-approvals "^1.0"
+
+# For Filament v4
+composer require eightynine/filament-approvals:"^2.0"
+
+# For Filament v5
+composer require eightynine/filament-approvals:"^3.0"
 ```
 
 ## Usage
