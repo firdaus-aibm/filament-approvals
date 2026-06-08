@@ -47,11 +47,11 @@ class ApprovalPlugin implements Plugin
         return app(static::class);
     }
 
-    public static function get(): static
+    public static function get(): ?static
     {
-        /** @var static $plugin */
-        $plugin = filament(app(static::class)->getId());
+        $id = app(static::class)->getId();
 
-        return $plugin;
+        /** @var ?static $plugin */
+        return filament()->getPlugin($id);
     }
 }
