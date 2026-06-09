@@ -1,4 +1,7 @@
-@import '../../vendor/filament/filament/resources/css/theme.css';
+/* Package-specific custom styles.
+   This entry is kept as a reference — the compiled dist is generated from it.
+   Currently no custom styles are needed; all classes used in views
+   are standard Tailwind utilities discovered via @source. */
 
 @source '../views/**/*.blade.php';
 @source '../../src/**/*.php';

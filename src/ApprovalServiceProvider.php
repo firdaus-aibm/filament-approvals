@@ -2,8 +2,6 @@
 
 namespace EightyNine\Approvals;
 
-use Filament\Support\Assets\AlpineComponent;
-use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
@@ -129,11 +127,20 @@ class ApprovalServiceProvider extends PackageServiceProvider
      */
     protected function getAssets(): array
     {
-        return [
-            // AlpineComponent::make('filament-approvals', __DIR__ . '/../resources/dist/components/filament-approvals.js'),
-            Css::make('filament-approvals-styles', __DIR__ . '/../resources/dist/filament-approvals.css'),
-            Js::make('filament-approvals-scripts', __DIR__ . '/../resources/dist/filament-approvals.js'),
-        ];
+        $assets = [];
+
+        $cssPath = __DIR__ . '/../resources/dist/filament-approvals.css';
+        $jsPath = __DIR__ . '/../resources/dist/filament-approvals.js';
+
+        if (file_exists($cssPath)) {
+            $assets[] = Css::make('filament-approvals-styles', $cssPath);
+        }
+
+        if (file_exists($jsPath)) {
+            $assets[] = Js::make('filament-approvals-scripts', $jsPath);
+        }
+
+        return $assets;
     }
 
     /**

@@ -11,3 +11,5 @@ phpunit.xml
 phpstan.neon
 testbench.yaml
 vendor
+resources/dist/filament-approvals.css
+resources/dist/filament-approvals.js
