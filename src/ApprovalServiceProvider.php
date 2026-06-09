@@ -2,8 +2,6 @@
 
 namespace EightyNine\Approvals;
 
-use Filament\Support\Assets\Js;
-use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentIcon;
 use Illuminate\Filesystem\Filesystem;
 use Livewire\Features\SupportTesting\Testable;
@@ -63,17 +61,6 @@ class ApprovalServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
-        // Asset Registration
-        FilamentAsset::register(
-            $this->getAssets(),
-            $this->getAssetPackageName()
-        );
-
-        FilamentAsset::registerScriptData(
-            $this->getScriptData(),
-            $this->getAssetPackageName()
-        );
-
         // Icon Registration
         FilamentIcon::register($this->getIcons());
 
@@ -122,16 +109,6 @@ class ApprovalServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * @return array<Asset>
-     */
-    protected function getAssets(): array
-    {
-        return [
-            Js::make('filament-approvals-scripts', __DIR__ . '/../resources/dist/filament-approvals.js'),
-        ];
-    }
-
-    /**
      * @return array<class-string>
      */
     protected function getCommands(): array
@@ -146,22 +123,6 @@ class ApprovalServiceProvider extends PackageServiceProvider
      * @return array<string>
      */
     protected function getIcons(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return array<string>
-     */
-    protected function getRoutes(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function getScriptData(): array
     {
         return [];
     }
