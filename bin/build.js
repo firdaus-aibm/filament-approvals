@@ -25,6 +25,13 @@ const defaultOptions = {
     treeShaking: true,
     target: ['es2020'],
     minify: !isDev,
+    // Optimize for smaller bundles
+    splitting: false,
+    format: 'iife',
+    // Remove unused code
+    metafile: !isDev,
+    // Enable dead code elimination
+    pure: ['console.log'],
     plugins: [{
         name: 'watchPlugin',
         setup: function (build) {
@@ -37,6 +44,14 @@ const defaultOptions = {
                     console.log(`Build failed at ${new Date(Date.now()).toLocaleTimeString()}: ${build.initialOptions.outfile}`, result.errors)
                 } else {
                     console.log(`Build finished at ${new Date(Date.now()).toLocaleTimeString()}: ${build.initialOptions.outfile}`)
+                    
+                    // Log bundle size in production
+                    if (!isDev && result.metafile) {
+                        const { outputs } = result.metafile
+                        Object.entries(outputs).forEach(([file, { bytes }]) => {
+                            console.log(`Bundle size: ${file} - ${(bytes / 1024).toFixed(2)}KB`)
+                        })
+                    }
                 }
             })
         }

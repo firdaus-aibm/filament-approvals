@@ -60,26 +60,33 @@ class ApprovalFlowResource extends Resource
     {
         return __('filament-approvals::approvals.navigation.plural_label');
     }
+    
     public static function form(Form $form): Form
     {
-        $models = (new ModelScannerService())->getApprovableModels();
+        // Use dependency injection for better performance
+        $modelScanner = app(ModelScannerService::class);
+        $models = $modelScanner->getApprovableModels();
 
         return $form
             ->columns(12)
             ->schema([
                 TextInput::make("name")
                     ->columnSpan(fn($context) => $context === 'create' ? 12 : 6)
-                    ->required(),
+                    ->required()
+                    ->maxLength(255),
+                    
                 Select::make('approvable_type')
                     ->columnSpan(fn($context) => $context === 'create' ? 12 : 6)
                     ->options(function() use ($models) {
-                        // remove 'App\Models\' from the value of models
-                        $models = array_map(function($model) {
-                            return str_replace('App\Models\\', '', $model);
-                        }, $models);
-                        return $models;
+                        // Optimize model name processing
+                        return collect($models)->mapWithKeys(function($model) {
+                            $shortName = class_basename($model);
+                            return [$model => $shortName];
+                        })->toArray();
                     })
-                    ->required(),
+                    ->required()
+                    ->searchable(),
+                    
                 Forms\Components\Placeholder::make('warning')
                     ->visible(fn() => empty($models))
                     ->columnSpanFull()
@@ -90,12 +97,44 @@ class ApprovalFlowResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->query(
+                // Optimize query with proper relationships
+                static::getModel()::query()
+                    ->when(
+                        config('approvals.performance.eager_load_relationships', true),
+                        fn($query) => $query->with(['steps'])
+                    )
+            )
             ->columns([
-                TextColumn::make("name"),
-                TextColumn::make("approvable_type"),
+                TextColumn::make("name")
+                    ->searchable()
+                    ->sortable(),
+                    
+                TextColumn::make("approvable_type")
+                    ->searchable()
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => class_basename($state)),
+                    
+                TextColumn::make('steps_count')
+                    ->counts('steps')
+                    ->label('Steps')
+                    ->sortable(),
+                    
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                // Add useful filters for better UX
+                Tables\Filters\SelectFilter::make('approvable_type')
+                    ->options(function() {
+                        $modelScanner = app(ModelScannerService::class);
+                        $models = $modelScanner->getApprovableModels();
+                        return collect($models)->mapWithKeys(function($model) {
+                            return [$model => class_basename($model)];
+                        })->toArray();
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -104,7 +143,11 @@ class ApprovalFlowResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->poll(config('approvals.ui.poll_interval', null)) // Optional auto-refresh
+            ->persistFiltersInSession()
+            ->persistSortInSession();
     }
 
     public static function getRelations(): array
@@ -121,5 +164,21 @@ class ApprovalFlowResource extends Resource
 //            'create' => Pages\CreateApprovalFlow::route('/create'),
             'edit' => Pages\EditApprovalFlow::route('/{record}/edit'),
         ];
+    }
+    
+    /**
+     * Get the Eloquent query builder for the resource
+     * Optimized for performance
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        
+        // Apply performance optimizations based on config
+        if (config('approvals.performance.eager_load_relationships', true)) {
+            $query->with(['steps']);
+        }
+        
+        return $query;
     }
 }

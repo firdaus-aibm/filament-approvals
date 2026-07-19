@@ -1,1 +1,29 @@
-@import '../../vendor/filament/filament/resources/css/theme.css';
+/* Filament Approvals CSS - optimized for performance */
+
+/* Use Tailwind base styles - these will be available in Filament context */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom approvals styles - keep minimal for performance */
+@layer components {
+    .approval-status-indicator {
+        @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full;
+    }
+
+    .approval-status-pending {
+        @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+    }
+
+    .approval-status-approved {
+        @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+    }
+
+    .approval-status-rejected {
+        @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+    }
+    
+    .approval-status-column {
+        @apply text-sm;
+    }
+}
